@@ -1,0 +1,15 @@
+{
+  "name": "skyrim-item-roulette",
+  "version": "1.0.0",
+  "description": "Roulettes items",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "chrome-remote-interface": "^0.30.0",
+    "wait-port": "^0.2.9"
+  }
+}

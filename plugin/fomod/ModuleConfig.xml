@@ -1,0 +1,14 @@
+<!-- FOMod Creation Tool [http://www.nexusmods.com/fallout4/mods/6821] -->
+<!-- FOMod Quick Guide [https://media.readthedocs.org/pdf/fomod-docs/latest/fomod-docs.pdf] -->
+<!-- FOMod Reference Manual [https://fomod-designer.readthedocs.io/en/stable/] -->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://qconsulting.ca/fo3/ModConfig5.0.xsd">
+  <moduleName>Item Roulette Selector for VRIK</moduleName>
+
+  <moduleDependencies operator="And">
+    <fileDependency file="vrik.esp" state="Active" />
+  </moduleDependencies>
+
+  <requiredInstallFiles>
+    <folder source="Data" priority="0"/>
+  </requiredInstallFiles>
+</config>

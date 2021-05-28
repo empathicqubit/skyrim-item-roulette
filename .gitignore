@@ -1,0 +1,6 @@
+*.zip
+/plugin/Data/Scripts/
+/plugin/Data/Meshes/
+/build/
+node_modules/
+*.blend[0-9]*
