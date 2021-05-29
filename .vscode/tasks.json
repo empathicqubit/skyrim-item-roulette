@@ -11,7 +11,20 @@
                 "kind": "build"
             },
             "command": "${workspaceFolder}/build.ps1",
-            "args": ["-Reload"],
+            "args": ["-KickVortex"],
+            "problemMatcher": [
+                "$PapyrusCompiler"
+            ]
+        },
+        {
+            "label": "Build and Reload",
+            "type": "shell",
+            "group": {
+                "isDefault": true,
+                "kind": "build"
+            },
+            "command": "${workspaceFolder}/build.ps1",
+            "args": ["-KickVortex", "-Reload"],
             "problemMatcher": [
                 "$PapyrusCompiler"
             ]

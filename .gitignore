@@ -1,6 +1,9 @@
 *.zip
+*.pyc
+*.log
 /plugin/Data/Scripts/
 /plugin/Data/Meshes/
+/plugin/Data/Textures/
 /build/
 node_modules/
 *.blend[0-9]*

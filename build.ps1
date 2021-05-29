@@ -2,17 +2,56 @@
     .SYNOPSIS
     Builds the plugin and optionally reloads it in Vortex.
 
+    .PARAMETER Scripts
+    Build Papyrus scripts
+
+    .PARAMETER Models
+    Build Blender models
+
+    .PARAMETER Textures
+    Build GIMP textures
+
+    .PARAMETER Zip
+    Build the ZIP AND NOTHING ELSE. You probably don't want this option
+
+    .PARAMETER KickVortex
+    Syncs the plugin with Vortex. If there are file conflicts, take changes
+    from the game directory! This will have changes from the ESP that were
+    made in Creation Kit! You need to symlink the /plugin directory into
+    the staging area, preferably using setup-dev.ps1 script.
+
     .PARAMETER Reload
-    Reloads Skyrim after building.  Reloading assumes you have symlinked the mod
-    into Vortex's staging area using the method in setup-dev.ps1. It completely
-    kills and restarts the game as I had trouble getting hlp and reloadscript
-    commands to work.
+    Reloads Skyrim after building. It completely kills and restarts the game
+    as I had trouble getting hlp and reloadscript commands to work.
 #>
 param (
     [Parameter(Mandatory = $False)]
     [Switch]
+    $Scripts,
+    [Parameter(Mandatory = $False)]
+    [Switch]
+    $Models,
+    [Parameter(Mandatory = $False)]
+    [Switch]
+    $Textures,
+    [Parameter(Mandatory = $False)]
+    [Switch]
+    $Zip,
+
+    [Parameter(Mandatory = $False)]
+    [Switch]
+    $KickVortex,
+    [Parameter(Mandatory = $False)]
+    [Switch]
     $Reload
 )
+
+if(-not $Scripts -and -not $Models -and -not $Textures -and -not $Zip) {
+    $Scripts = $true
+    $Textures = $true
+    $Models = $true
+    $Zip = $true
+}
 
 New-Item -ItemType Directory "$PSScriptRoot/build" -ErrorAction SilentlyContinue
 
@@ -71,36 +110,49 @@ if(-not $SkyrimBase) {
     )).FullName
 }
 
-# Compile the scripts
-& "$SkyrimBase/Papyrus Compiler/PapyrusCompiler.exe" `
-    "$PsScriptRoot/Source/Scripts" `
-    "-f=$SkyrimBase/Data/Source/Scripts/TESV_Papyrus_Flags.flg" `
-    "-i=$SkyrimBase/Data/Source/Scripts;$PsScriptRoot/Source/Scripts" `
-    "-o=$PsScriptRoot/plugin/Data/Scripts" `
-    "-all"
+if($Scripts) {
+    # Compile the scripts
+    & "$SkyrimBase/Papyrus Compiler/PapyrusCompiler.exe" `
+        "$PsScriptRoot/Source/Scripts" `
+        "-f=$SkyrimBase/Data/Source/Scripts/TESV_Papyrus_Flags.flg" `
+        "-i=$SkyrimBase/Data/Source/Scripts;$PsScriptRoot/Source/Scripts" `
+        "-o=$PsScriptRoot/plugin/Data/Scripts" `
+        "-all"
 
-if($LastExitCode -ne 0) {
-    return $LastExitCode
+    if($LastExitCode -ne 0) {
+        return $LastExitCode
+    }
 }
 
-# Build the models
-blender.exe --background --python "$PSScriptRoot/export-blender-models.py"
+if($Textures) {
+    Push-Location "$PSScriptRoot"
 
-if($LastExitCode -ne 0) {
-    return $LastExitCode
-}
+    gimp-console -n -i --batch-interpreter python-fu-eval -b "import export_gimp_textures"
 
-# ZIP up the deployment package
-$ZipPath = "$PSScriptRoot/build/Item Roulette for VRIK.zip"
-
-Remove-Item $ZipPath -ErrorAction SilentlyContinue
-Compress-Archive -Path $PSScriptRoot/plugin/* -DestinationPath $ZipPath
-
-if($Reload) {
-    if($Proc) {
-        Stop-Process $Proc
+    if($LastExitCode -ne 0) {
+        return $LastExitCode
     }
 
+    Pop-Location
+}
+
+if($Models) {
+    blender --background --python "$PSScriptRoot/export_blender_models.py"
+
+    if($LastExitCode -ne 0) {
+        return $LastExitCode
+    }
+}
+
+if($Zip) {
+    # ZIP up the deployment package
+    $ZipPath = "$PSScriptRoot/build/Item Roulette for VRIK.zip"
+
+    Remove-Item $ZipPath -ErrorAction SilentlyContinue
+    Compress-Archive -Path $PSScriptRoot/plugin/* -DestinationPath $ZipPath
+}
+
+if($KickVortex) {
     # Restart Vortex and kick off deploy-mods event via Chrome Debug Protocol.
     Stop-Process -Name Vortex
     $env:KICK_PORT=6969
@@ -110,8 +162,14 @@ if($Reload) {
 
     pnpm install -C "$PSScriptRoot"
 
-    node.exe "$PSScriptRoot/kick-vortex.js"
+    node "$PSScriptRoot/kick-vortex.js"
     Stop-Process -Name Vortex -ErrorAction SilentlyContinue
+}
+
+if($Reload) {
+    if($Proc) {
+        Stop-Process $Proc
+    }
 
     # Prefer SKSE loader if we have it installed
     $SkyrimExe = Get-Item -Path @(
@@ -135,3 +193,5 @@ if($Reload) {
 "@
     } while ($wrFail)
 }
+
+return 0

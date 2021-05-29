@@ -1,7 +1,7 @@
 import bpy
 import os
-
 from pathlib import Path
+
 curdir = Path(__file__).parent
 print("Current directory: " + str(curdir))
 plugin_data_dir = curdir.joinpath("plugin/Data")
@@ -16,9 +16,9 @@ for blend_path in blend_paths:
     nif_parent = dest_blend_path.parent
     nif_path = nif_parent.joinpath(dest_blend_path.stem + '.nif')
     print(str(blend_path) + " -> " + str(nif_path))
-    bpy.ops.wm.open_mainfile(filepath=str(blend_path))
     try:
         nif_parent.mkdir(parents=True)
     except FileExistsError:
         pass
+    bpy.ops.wm.open_mainfile(filepath=str(blend_path))
     bpy.ops.export_scene.nif(filepath=str(nif_path))
