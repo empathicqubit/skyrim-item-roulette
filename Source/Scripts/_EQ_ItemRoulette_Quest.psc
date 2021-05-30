@@ -39,6 +39,7 @@ EndEvent
 Event OnMyAction(string eventName, string strArg, float numArg, Form sender)
 	Debug.Trace("VRIK activated me!")
 	PlayerRef.PlaceAtMe(_EQ_ItemRoulette_Roulette)
+	;/
 	Int numItems = PlayerRef.getNumItems()
 	Int formIndex = numItems
 	Int count = 0
@@ -51,4 +52,5 @@ Event OnMyAction(string eventName, string strArg, float numArg, Form sender)
 		invItemInst.SetMotionType(invItemInst.Motion_Keyframed)
 		DisplayItems[count - 1] = invItemInst
 	EndWhile
+	/;
 EndEvent

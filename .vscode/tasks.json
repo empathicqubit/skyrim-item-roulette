@@ -19,10 +19,7 @@
         {
             "label": "Build and Reload",
             "type": "shell",
-            "group": {
-                "isDefault": true,
-                "kind": "build"
-            },
+            "group": "build",
             "command": "${workspaceFolder}/build.ps1",
             "args": ["-KickVortex", "-Reload"],
             "problemMatcher": [

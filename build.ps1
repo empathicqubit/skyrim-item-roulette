@@ -154,7 +154,7 @@ if($Zip) {
 
 if($KickVortex) {
     # Restart Vortex and kick off deploy-mods event via Chrome Debug Protocol.
-    Stop-Process -Name Vortex
+    Stop-Process -Name Vortex -ErrorAction SilentlyContinue
     $env:KICK_PORT=6969
     $VortexPath = (Get-ItemProperty HKLM:\SOFTWARE\57979c68-f490-55b8-8fed-8b017a5af2fe).InstallLocation
     $GameId = (Get-Item "$env:APPDATA/Vortex/skyrim*").BaseName
