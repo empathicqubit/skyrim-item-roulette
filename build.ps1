@@ -11,6 +11,9 @@
     .PARAMETER Target
     Build a specific Makefile target
 
+    .PARAMETER Force
+    Force Make to rebuild (-B)
+
     .PARAMETER KickVortex
     Syncs the plugin with Vortex. This option requires Node.js and pnpm to
     communicate with Vortex. Keep in mind that this only half works if Vortex
@@ -38,6 +41,9 @@ param (
     [Parameter(Mandatory = $False)]
     [String]
     $Target,
+    [Parameter(Mandatory = $False)]
+    [Switch]
+    $Force,
 
     [Parameter(Mandatory = $False)]
     [Switch]
@@ -132,7 +138,11 @@ if($Reload) {
     }
 }
 
-make -C "$PSScriptRoot" SKYRIM_BASE=$SkyrimBase $Target
+if($Force) {
+    $MakeB = "-B"
+}
+
+make $MakeB -C $PSScriptRoot SKYRIM_BASE=$SkyrimBase $Target
 
 if(-not $LastExitCode -eq 0) {
     return $LastExitCode

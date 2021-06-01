@@ -33,10 +33,10 @@ scripts: $(scriptFiles)
 
 plugin/Data/Scripts/%.pex: Source/Scripts/%.psc
 		"$(SKYRIM_BASE)/Papyrus Compiler/PapyrusCompiler.exe" \
-			"$^" \
+			"$(current_dir)/$^" \
 			"-f=$(SKYRIM_BASE)/Data/Source/Scripts/TESV_Papyrus_Flags.flg" \
-			"-i=$(SKYRIM_BASE)/Data/Source/Scripts;Source/Scripts" \
-			"-o=$@"
+			"-i=$(SKYRIM_BASE)/Data/Source/Scripts;$(current_dir)/Source/Scripts" \
+			"-o=$(dir $(current_dir)/$@)"
 
 textures: $(textureFiles)
 
