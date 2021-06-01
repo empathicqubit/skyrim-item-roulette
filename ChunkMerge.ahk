@@ -1,38 +1,28 @@
 SetTitleMatchMode, RegEx
 WinWait, ahk_exe i)ChunkMerge.exe
-WinActivate, ahk_exe i)ChunkMerge.exe
-
-ControlFocus Button1, A
-Send {Space}
-
-WinWaitNotActive, i)ChunkMerge
+WinGet, ChunkMain, ID, ahk_exe i)ChunkMerge.exe
+WinActivate, ahk_id %ChunkMain%
 
 Clipboard := ChunkMerge_NifFile
+ControlFocus Edit1, ahk_id %ChunkMain%
 Send +{Insert}
-Send {Enter}
-
-WinWaitActive, i)ChunkMerge
-
-ControlFocus Button2, A
-Send {Space}
-
-WinWaitNotActive, i)ChunkMerge
 
 Clipboard := ChunkMerge_CollisionFile
+ControlFocus Edit2, ahk_id %ChunkMain%
 Send +{Insert}
-Send {Enter}
 
-WinWaitActive, i)ChunkMerge
-
-ControlFocus, ComboBox1, A
+ControlFocus, ComboBox1, ahk_id %ChunkMain%
 Send, %ChunkMerge_TemplateFile%
-ControlFocus, Mesh Data, A
-Send {Space}
-ControlFocus, Name of NiTriShape, A
-Send {Space}
+ControlClick, Mesh Data, ahk_id %ChunkMain%
+ControlClick, Name of NiTriShape, ahk_id %ChunkMain%
 
-Send {Enter}
+ControlSend Convert, {Space}, ahk_id %ChunkMain%
 
-Sleep 3000
-
-WinClose, ahk_exe i)ChunkMerge.exe
+Loop {
+    Sleep 100
+    ControlGetText, FinishedText, RichEdit20W1, ahk_id %ChunkMain%
+    IfInString, FinishedText, Nif converted successfully
+    {
+        Break
+    }
+}

@@ -5,17 +5,11 @@
     .PARAMETER InstallDependencies
     Installs script dependencies with Chocolatey, except Papyrus, and quit
 
-    .PARAMETER Scripts
-    Build Papyrus scripts
+    .PARAMETER StartVortex
+    Start Vortex on the appropriate port and do nothing else.
 
-    .PARAMETER Models
-    Build Blender models
-
-    .PARAMETER Textures
-    Build GIMP textures
-
-    .PARAMETER Zip
-    Build the ZIP AND NOTHING ELSE. You probably don't want this option.
+    .PARAMETER Target
+    Build a specific Makefile target
 
     .PARAMETER KickVortex
     Syncs the plugin with Vortex. This option requires Node.js and pnpm to
@@ -37,20 +31,13 @@ param (
     [Parameter(Mandatory = $False)]
     [Switch]
     $InstallDependencies,
+    [Parameter(Mandatory = $False)]
+    [Switch]
+    $StartVortex,
 
     [Parameter(Mandatory = $False)]
-    [Switch]
-    $Scripts,
-    [Parameter(Mandatory = $False)]
-    [Switch]
-    $Models,
-    [Parameter(Mandatory = $False)]
-    [Switch]
-    $Textures,
-
-    [Parameter(Mandatory = $False)]
-    [Switch]
-    $Zip,
+    [String]
+    $Target,
 
     [Parameter(Mandatory = $False)]
     [Switch]
@@ -70,14 +57,16 @@ if($InstallDependencies) {
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
     Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
-    choco install blender gimp 7zip autohotkey
+    choco install blender gimp 7zip autohotkey make nodejs
+    return 0
 }
 
-if(-not $Scripts -and -not $Models -and -not $Textures -and -not $Zip) {
-    $Scripts = $true
-    $Textures = $true
-    $Models = $true
-    $Zip = $true
+if($StartVortex) {
+    Stop-Process -Name Vortex -ErrorAction SilentlyContinue
+    $VortexPath = (Get-ItemProperty HKLM:\SOFTWARE\57979c68-f490-55b8-8fed-8b017a5af2fe).InstallLocation
+    $GameId = (Get-Item "$env:APPDATA/Vortex/skyrim*").BaseName
+    & "$VortexPath/Vortex.exe" --remote-debugging-port=$KickPort --game=$GameId
+    return 0
 }
 
 New-Item -ItemType Directory "$PSScriptRoot/build" -ErrorAction SilentlyContinue
@@ -143,139 +132,26 @@ if($Reload) {
     }
 }
 
-if($Scripts) {
-    # Compile the scripts
-    & "$SkyrimBase/Papyrus Compiler/PapyrusCompiler.exe" `
-        "$PsScriptRoot/Source/Scripts" `
-        "-f=$SkyrimBase/Data/Source/Scripts/TESV_Papyrus_Flags.flg" `
-        "-i=$SkyrimBase/Data/Source/Scripts;$PsScriptRoot/Source/Scripts" `
-        "-o=$PsScriptRoot/plugin/Data/Scripts" `
-        "-all"
+make -C "$PSScriptRoot" SKYRIM_BASE=$SkyrimBase $Target
 
-    if($LastExitCode -ne 0) {
-        return $LastExitCode
-    }
-}
-
-if($Textures) {
-    Push-Location "$PSScriptRoot"
-
-    $Gimp = (Get-Item -Path @("$Env:ProgramFiles/GIMP*/bin/gimp-console*.exe", "${env:ProgramFiles(x86)}/GIMP*/bin/gimp-console*.exe")).FullName
-    & $Gimp -n -i --batch-interpreter python-fu-eval -b "import export_gimp_textures"
-
-    if($LastExitCode -ne 0) {
-        return $LastExitCode
-    }
-
-    Pop-Location
-}
-
-
-if($Models) {
-    $Blender = (Get-Item -Path @("${env:ProgramFiles(x86)}/blender*/blender*/blender.exe", "$env:ProgramFiles/blender*/blender*/blender.exe")).FullName
-    & $Blender --background --python "$PSScriptRoot/export_blender_models.py"
-
-    if($LastExitCode -ne 0) {
-        return $LastExitCode
-    }
-
-    $ChunkmergeBase = "$PSScriptRoot/build/ChunkMerge"
-    $MeshSourceDir = "$PSScriptRoot/Source/Meshes/_EQ_ItemRoulette"
-    $MeshDestDir = "$PSScriptRoot/plugin/Data/Meshes/_EQ_ItemRoulette"
-    $ChunkMergeZip = "$PSScriptRoot/build/chunkmerge.7z"
-    if(-not (Test-Path $ChunkmergeBase)) {
-        Invoke-WebRequest -Uri "https://github.com/downloads/skyfox69/NifUtils/ChunkMerge0155.7z" -OutFile $ChunkMergeZip
-        7z x "-o$PSScriptRoot/build" $ChunkMergeZip
-    }
-
-    $ChunkMergeConfig = @"
-<Config>
-    <PathSkyrim>$SkyrimBase</PathSkyrim>
-    <PathNifXML>$PSScriptRoot/nif.xml</PathNifXML>
-    <PathTemplate>$MeshSourceDir</PathTemplate>
-    <LastTexture></LastTexture>
-    <LastTemplate></LastTemplate>
-    <DirSource></DirSource>
-    <DirDestination></DirDestination>
-    <DirCollision></DirCollision>
-    <MatHandling>0</MatHandling>
-    <VertexColorHandling>0</VertexColorHandling>
-    <UpdateTangentSpace>1</UpdateTangentSpace>
-    <ReorderProperties>1</ReorderProperties>
-    <CollTypeHandling>1</CollTypeHandling>
-    <CollMaterial>-553455049</CollMaterial>
-    <MaterialScan>
-        <MatScanTag>SkyrimHavokMaterial</MatScanTag>
-        <MatScanName>SKY_HAV_</MatScanName>
-        <MatScanPrefixList>
-            <MatScanPrefix>Material</MatScanPrefix>
-        </MatScanPrefixList>
-        <MatScanIgnoreList>
-            <MatScanIgnore>Unknown</MatScanIgnore>
-        </MatScanIgnoreList>
-    </MaterialScan>
-    <DirectXView>
-        <ShowTexture>1</ShowTexture>
-        <ShowWireframe>0</ShowWireframe>
-        <ShowColorWire>0</ShowColorWire>
-        <ForceDDS>0</ForceDDS>
-        <ColorWireframe>ffffffff</ColorWireframe>
-        <ColorWireCollision>ffffff00</ColorWireCollision>
-        <ColorBackground>ff200020</ColorBackground>
-        <ColorSelected>ffff00ff</ColorSelected>
-        <TexturePathList>
-        </TexturePathList>
-    </DirectXView>
-</Config>
-"@
-
-    Out-File -Encoding ascii -FilePath "$ChunkmergeBase/ChunkMerge.xml" -InputObject $ChunkMergeConfig
-
-    $ChunkMerge = "$ChunkmergeBase/ChunkMerge.exe"
-    & $ChunkMerge
-
-    # FIXME This path is not recursive because ChunkMerge can't handle it
-    foreach($ChunkTemplate in (Get-Item "$MeshSourceDir/*_template.nif")) {
-        $env:ChunkMerge_NifFile = Join-Path $MeshDestDir ($ChunkTemplate.Name -replace "_template.", ".")
-        $env:ChunkMerge_CollisionFile = Join-Path $MeshDestDir ($ChunkTemplate.Name -replace "_template.", "_collision.")
-        $env:ChunkMerge_TemplateFile = $ChunkTemplate.Name
-        Start-Process -Wait -FilePath AutoHotkey -ArgumentList @("$PSScriptRoot/ChunkMerge.ahk")
-
-        if($LastExitCode -ne 0) {
-            return $LastExitCode
-        }
-    }
-}
-
-if($Zip) {
-    # ZIP up the deployment package
-    $ZipPath = "$PSScriptRoot/build/Item Roulette for VRIK.zip"
-
-    Remove-Item $ZipPath -ErrorAction SilentlyContinue
-    Compress-Archive -Path $PSScriptRoot/plugin/* -DestinationPath $ZipPath
+if(-not $LastExitCode -eq 0) {
+    return $LastExitCode
 }
 
 if($KickVortex) {
-    # Restart Vortex and kick off deploy-mods event via Chrome Debug Protocol.
-    $VortexRunningWithDebuggingPortActive = `
-        (Get-NetTCPConnection -State Listen -LocalPort $KickPort -ErrorAction SilentlyContinue) `
-        | Where-Object { 
-            $tcpConn = $_ 
-            Get-Process -Name Vortex | Where-Object { $tcpConn.OwningProcess -eq $_.Id }
-        }
-
     $env:KICK_PORT=$KickPort
-
-    if (-not $VortexRunningWithDebuggingPortActive) {
-        Stop-Process -Name Vortex -ErrorAction SilentlyContinue
-        $VortexPath = (Get-ItemProperty HKLM:\SOFTWARE\57979c68-f490-55b8-8fed-8b017a5af2fe).InstallLocation
-        $GameId = (Get-Item "$env:APPDATA/Vortex/skyrim*").BaseName
-        & "$VortexPath/Vortex.exe" --remote-debugging-port=$KickPort --game=$GameId
-    }
 
     pnpm install -C "$PSScriptRoot"
 
+    if(-not $LastExitCode -eq 0) {
+        return $LastExitCode
+    }
+
     node "$PSScriptRoot/kick-vortex.js"
+
+    if(-not $LastExitCode -eq 0) {
+        return $LastExitCode
+    }
 }
 
 if($Reload) {
