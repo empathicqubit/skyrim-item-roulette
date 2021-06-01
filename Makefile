@@ -36,13 +36,15 @@ plugin/Data/Scripts/%.pex: Source/Scripts/%.psc
 			"$^" \
 			"-f=$(SKYRIM_BASE)/Data/Source/Scripts/TESV_Papyrus_Flags.flg" \
 			"-i=$(SKYRIM_BASE)/Data/Source/Scripts;Source/Scripts" \
-			"-o=$@" \
+			"-o=$@"
 
 textures: $(textureFiles)
-		GIMP=$$(powershell -Command '(Get-Item "$(ProgramW6432)/GIMP*/bin/gimp-console*.exe").FullName')
-		"$$GIMP" -n -i --batch-interpreter python-fu-eval -b "import export_gimp_textures"
 
-models: $(modelFiles)
+plugin/Data/Textures/_EQ_ItemRoulette/%.dds: Source/Textures/_EQ_ItemRoulette/%.xcf
+		GIMP=$$(powershell -Command '(Get-Item "$(ProgramW6432)/GIMP*/bin/gimp-console*.exe").FullName')
+		"$$GIMP" -n -i --batch-interpreter python-fu-eval -b 'import export_gimp_textures ; export_gimp_textures.main("$<", "$@")'
+
+models: $(modelFiles) textures
 
 build/ChunkMerge/ChunkMerge.exe: build/chunkmerge.7z
 		7z x -y "-obuild" "$<"

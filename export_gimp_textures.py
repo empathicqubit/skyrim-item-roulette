@@ -1,30 +1,16 @@
-from gimpfu import pdb
-import platform
-import sys
+def main(xcf_path, dds_path):
+    from gimpfu import pdb
+    import platform
+    import sys
 
-pdb.gimp_message("Started exporting textures.")
-pdb.gimp_message(platform.python_version())
+    pdb.gimp_message("Started exporting textures.")
+    pdb.gimp_message(platform.python_version())
 
-try:
-    import glob
-    import os
-    import pydoc
+    try:
+        import os
+        import pydoc
 
-    curdir = os.path.dirname(os.path.abspath(__file__))
-    pdb.gimp_message("Current directory: " + curdir)
-    plugin_data_dir = os.path.join(curdir, "plugin/Data")
-    pdb.gimp_message("Plugin directory: " + plugin_data_dir)
-    texture_src_dir = os.path.join(curdir, "Source/Textures/_EQ_ItemRoulette")
-    pdb.gimp_message("Texture Source directory: " + texture_src_dir)
-    texture_dest_dir = os.path.join(plugin_data_dir, "Textures/_EQ_ItemRoulette")
-    pdb.gimp_message("Texture Dest directory: " + texture_dest_dir)
-
-    # FIXME This won't recurse
-    xcf_paths = glob.glob(texture_src_dir + "/*.xcf")
-    for xcf_path in xcf_paths:
-        dest_xcf_path = os.path.join(texture_dest_dir, os.path.relpath(path=xcf_path, start=texture_src_dir))
-        dds_parent = os.path.dirname(dest_xcf_path)
-        dds_path = os.path.join(os.path.splitext(dest_xcf_path)[0] + '.dds')
+        dds_parent = os.path.dirname(dds_path)
         pdb.gimp_message(xcf_path + " -> " + dds_path)
         try:
             os.makedirs(dds_parent)
@@ -69,7 +55,7 @@ try:
             # (3, 'alpha-test-threshold', 'Alpha test threshold value for which alpha test converage should be preserved')
         )
         pdb.gimp_image_delete(image)
-except:
-    pdb.gimp_message("An unhandled error occurred: " + str(sys.exc_info()[0]) + ": " + str(sys.exc_info()[1]))
+    except:
+        pdb.gimp_message("An unhandled error occurred: " + str(sys.exc_info()[0]) + ": " + str(sys.exc_info()[1]))
 
-pdb.gimp_quit(0)
+    pdb.gimp_quit(0)
