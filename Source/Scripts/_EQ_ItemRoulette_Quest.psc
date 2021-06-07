@@ -7,9 +7,10 @@ ObjectReference[] DisplayItems
 ObjectReference Roulette
 
 Int MAX_ITEMS = 5
-Float UI_DISTANCE = 32.0
+Float UI_DISTANCE = 48.0
 Float UI_DEGREES = 7.0
 Float UI_ZEES = 4.0
+Float UI_ITEM_SCALE = 0.2
 
 Event OnInit()
 	DisplayItems = New ObjectReference[127]
@@ -36,11 +37,11 @@ Event OnUpdate()
 	Float handZ = VRIK.VrikGetHandZ(true)
 	Float playerAngle = PlayerRef.GetAngleZ()
 
-	Roulette.MoveTo(PlayerRef, UI_DISTANCE * Math.sin(playerAngle), UI_DISTANCE * Math.cos(playerAngle), VRIK.VrikGetHmdZ(), true)
+	Roulette.TranslateTo(PlayerRef.X + UI_DISTANCE * Math.sin(playerAngle), PlayerRef.Y + UI_DISTANCE * Math.cos(playerAngle), VRIK.VrikGetHmdZ(), 0, 0, playerAngle, 1000)
 
 	Int index = 0
 	While index < MAX_ITEMS && DisplayItems[index] != None
-		; TLRB
+		; T-LCR-B
 		Float top = 0
 		Float left = 0
 		If index == 0
@@ -72,7 +73,7 @@ Event OnMyAction(string eventName, string strArg, float numArg, Form sender)
 		count = numItems - formIndex
 		Form invItem = PlayerRef.GetNthForm(formIndex)
 		ObjectReference invItemInst = PlayerRef.DropObject(invItem)
-		invItemInst.SetScale(0.1)
+		invItemInst.SetScale(UI_ITEM_SCALE)
 		invItemInst.SetMotionType(invItemInst.Motion_Keyframed)
 		DisplayItems[count - 1] = invItemInst
 	EndWhile

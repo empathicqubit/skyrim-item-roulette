@@ -35,12 +35,12 @@ plugin/Data/Scripts/%.pex: Source/Scripts/%.psc
 		"$(SKYRIM_BASE)/Papyrus Compiler/PapyrusCompiler.exe" \
 			"$(current_dir)/$^" \
 			"-f=$(SKYRIM_BASE)/Data/Source/Scripts/TESV_Papyrus_Flags.flg" \
-			"-i=$(SKYRIM_BASE)/Data/Source/Scripts;$(current_dir)/Source/Scripts" \
+			"-i=$(SKYRIM_BASE)/Data/Source/Scripts;$(SKYRIM_BASE)/Data/Scripts/Source;$(current_dir)/Source/Scripts" \
 			"-o=$(dir $(current_dir)/$@)"
 
 textures: $(textureFiles)
 
-plugin/Data/Textures/_EQ_ItemRoulette/%.dds: Source/Textures/_EQ_ItemRoulette/%.xcf
+plugin/Data/Textures/_EQ_ItemRoulette/%.dds: Source/Textures/_EQ_ItemRoulette/%.xcf export_gimp_textures.py
 		GIMP=$$(powershell -Command '(Get-Item "$(ProgramW6432)/GIMP*/bin/gimp-console*.exe").FullName')
 		"$$GIMP" -n -i --batch-interpreter python-fu-eval -b 'import export_gimp_textures ; export_gimp_textures.main("$<", "$@")'
 
@@ -100,10 +100,12 @@ plugin/Data/Meshes/_EQ_ItemRoulette/%_final.nif: Source/Meshes/_EQ_ItemRoulette/
 		build/ChunkMerge/ChunkMerge.exe &
 		powershell -Command '$$env:ChunkMerge_NifFile=Split-Path (Join-Path "$@" "."); $$env:ChunkMerge_CollisionFile=Split-Path (Join-Path "$(filter %_collision.nif,$^)" ".") ; $$env:ChunkMerge_TemplateFile="$(notdir $(filter %_template.nif,$^))" ; Start-Process -Wait -FilePath AutoHotKey -ArgumentList @("ChunkMerge.ahk") ; Stop-Process -Name ChunkMerge'
 
+.PRECIOUS: plugin/Data/Meshes/_EQ_ItemRoulette/%_mesh.nif
 plugin/Data/Meshes/_EQ_ItemRoulette/%_mesh.nif: Source/Meshes/_EQ_ItemRoulette/%_mesh.blend
 		BLENDER=$$(powershell -Command '(Get-Item "$(ProgramW6432)/Blender*/Blender*/blender.exe").FullName')
 		"$$BLENDER" --background --python "./export_blender_models.py" -- "$^" "$@"
 
+.PRECIOUS: plugin/Data/Meshes/_EQ_ItemRoulette/%_collision.nif
 plugin/Data/Meshes/_EQ_ItemRoulette/%_collision.nif: Source/Meshes/_EQ_ItemRoulette/%_collision.blend
 		BLENDER=$$(powershell -Command '(Get-Item "$(ProgramW6432)/Blender*/Blender*/blender.exe").FullName')
 		"$$BLENDER" --background --python "./export_blender_models.py" -- "$^" "$@"

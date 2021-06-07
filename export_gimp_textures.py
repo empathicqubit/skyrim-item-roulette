@@ -21,7 +21,7 @@ def main(xcf_path, dds_path):
         pdb.file_dds_save(
             image, 
             # (13, 'image', 'Input image'), 
-            image.flatten(), 
+            pdb.gimp_image_merge_visible_layers(image, 1), 
             # (16, 'drawable', 'Drawable to save'), 
             dds_path, 
             # (4, 'filename', 'The name of the file to save the image as'),
