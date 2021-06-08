@@ -9,8 +9,9 @@ try:
     index = argv.index("--") + 1
 except ValueError:
     index = len(argv)
-
 argv = argv[index:]
+
+bpy.ops.preferences.addon_enable(module='io_scene_niftools')
 
 curdir = Path(__file__).parent
 blend_path = Path(argv[0])

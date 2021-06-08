@@ -1,0 +1,33 @@
+{
+    "_meta": {
+        "hash": {
+            "sha256": "bb61dfe357ea16e199e93ef79d83cabdc7fef8a99c5376ba3a5a6aa2428f4eeb"
+        },
+        "pipfile-spec": 6,
+        "requires": {
+            "python_version": "3.7.9"
+        },
+        "sources": [
+            {
+                "url": "https://pypi.python.org/simple"
+            }
+        ]
+    },
+    "default": {
+        "pyffi": {
+            "file": "https://github.com/amorilia/pyffi/archive/refs/tags/pyffi-2.2.2.zip",
+            "hashes": [
+                "sha256:2ebdeb86e29e9b532b40fe61b6005e0d29973f2f7e966dbb9fc9c1f4680fa3ca"
+            ],
+            "version": "==2.2.2"
+        },
+        "pyqt4": {
+            "file": "https://download.lfd.uci.edu/pythonlibs/q4trcu4l/PyQt4-4.11.4-cp37-cp37m-win_amd64.whl",
+            "hashes": [
+                "sha256:3bd04c8576ffdc6db3b991642d1657fcee4df803c869a97d11a6eaab1445d59a"
+            ],
+            "version": "==4.11.4"
+        }
+    },
+    "develop": {}
+}

@@ -1,0 +1,9 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+
+[packages]
+pyqt4 = {file = "https://download.lfd.uci.edu/pythonlibs/q4trcu4l/PyQt4-4.11.4-cp37-cp37m-win_amd64.whl"}
+pyffi = {file = "https://github.com/amorilia/pyffi/archive/refs/tags/pyffi-2.2.2.zip"}
+
+[requires]
+python_version = "3.7.9"

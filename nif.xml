@@ -111,9 +111,11 @@
         A standard 32-bit floating point number.
     </basic>
     
+    <!--
     <basic name="hfloat" count="0">
         A 16-bit floating point number.
     </basic>
+    -->
     
     <basic name="HeaderString" count="0">
         A variable length string that ends with a newline character (0x0A).  The string starts as follows depending on the version:

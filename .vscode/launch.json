@@ -5,6 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Aktuelle Datei",
+            "type": "python",
+            "request": "launch",
+            "python": "${command:python.interpreterPath}",
+            "program": "${file}",
+            "args": ["--", "${workspaceFolder}/plugin/Data/Meshes/_EQ_ItemRoulette/roulette_container_final.nif"],
+            "console": "integratedTerminal"
+        },
+        {
             "type": "papyrus",
             "name": "Skyrim",
             "request": "attach",

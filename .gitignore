@@ -7,3 +7,5 @@
 /build/
 node_modules/
 *.blend[0-9]*
+.venv/*
+!.venv/DONT_DELETE
