@@ -11,6 +11,7 @@
             "python": "${command:python.interpreterPath}",
             "program": "${file}",
             "args": ["--", "${workspaceFolder}/plugin/Data/Meshes/_EQ_ItemRoulette/roulette_container_final.nif"],
+            //"args": ["--", "${env:USERPROFILE}/Desktop/cabbage01.nif"],
             "console": "integratedTerminal"
         },
         {

@@ -59,6 +59,7 @@ plugin/Data/Textures/_EQ_ItemRoulette/%.dds: Source/Textures/_EQ_ItemRoulette/%.
 		pyenv install $$(cat ".python-version")
 		pyenv exec pip install --user pipenv
 		pyenv exec python -m pipenv install
+		touch -c "$@"
 
 models: $(modelFiles) textures
 
@@ -113,8 +114,11 @@ build/ChunkMerge/ChunkMerge.xml: build/ChunkMerge/ChunkMerge.exe
 		</Config>
 	HERE
 
+plugin/Data/Meshes/_EQ_ItemRoulette/%_final.nif: setalpha.py .venv/pyvenv.cfg plugin/Data/Meshes/_EQ_ItemRoulette/%_chunkmerge.nif
+		pyenv exec python -m pipenv run python "$<" -- "$(word 3,$^)" "$@"
 
-plugin/Data/Meshes/_EQ_ItemRoulette/%_final.nif: Source/Meshes/_EQ_ItemRoulette/%_template.nif plugin/Data/Meshes/_EQ_ItemRoulette/%_collision.nif plugin/Data/Meshes/_EQ_ItemRoulette/%_mesh.nif build/ChunkMerge/ChunkMerge.xml
+.PRECIOUS: plugin/Data/Meshes/_EQ_ItemRoulette/%_chunkmerge.nif
+plugin/Data/Meshes/_EQ_ItemRoulette/%_chunkmerge.nif: Source/Meshes/_EQ_ItemRoulette/%_template.nif plugin/Data/Meshes/_EQ_ItemRoulette/%_collision.nif plugin/Data/Meshes/_EQ_ItemRoulette/%_mesh.nif build/ChunkMerge/ChunkMerge.xml
 		cp "$(filter %_mesh.nif,$^)" "$@"
 		build/ChunkMerge/ChunkMerge.exe &
 		powershell -Command '$$env:ChunkMerge_NifFile=Split-Path (Join-Path "$@" "."); $$env:ChunkMerge_CollisionFile=Split-Path (Join-Path "$(filter %_collision.nif,$^)" ".") ; $$env:ChunkMerge_TemplateFile="$(notdir $(filter %_template.nif,$^))" ; Start-Process -Wait -FilePath AutoHotKey -ArgumentList @("ChunkMerge.ahk") ; Stop-Process -Name ChunkMerge'
