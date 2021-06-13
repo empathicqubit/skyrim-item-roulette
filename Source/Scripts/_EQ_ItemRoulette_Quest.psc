@@ -6,13 +6,24 @@ Static Property _EQ_ItemRoulette_Roulette Auto
 ObjectReference[] DisplayItems
 ObjectReference Roulette
 
-Int MAX_ITEMS = 5
-Float UI_DISTANCE = 48.0
-Float UI_DEGREES = 7.0
-Float UI_ZEES = 4.0
-Float UI_ITEM_SCALE = 0.2
+Int MAX_ITEMS
+Float UI_DISTANCE
+Float UI_DEGREES
+Float UI_ZEES
+Float UI_ITEM_SCALE
 
 Event OnInit()
+	; Placeholder for things to happen only on first load for this save
+	Main()
+EndEvent
+
+Function Main()
+	MAX_ITEMS = 5
+	UI_DISTANCE = 48.0
+	UI_DEGREES = 14.0
+	UI_ZEES = 12.0
+	UI_ITEM_SCALE = 0.25
+
 	DisplayItems = New ObjectReference[127]
 	int index = 0
 	While index < MAX_ITEMS
@@ -20,10 +31,6 @@ Event OnInit()
 		index += 1
 	EndWhile
 
-	Main()
-EndEvent
-
-Function Main()
 	Debug.Trace("Item Roulette loaded")
 	Roulette = PlayerRef.PlaceAtMe(_EQ_ItemRoulette_Roulette)
 	RegisterForModEvent("_EQ_ItemRoulette_Activate", "OnMyAction")
@@ -32,9 +39,6 @@ Function Main()
 EndFunction
 
 Event OnUpdate()
-	Float handX = VRIK.VrikGetHandX(true)
-	Float handY = VRIK.VrikGetHandY(true)
-	Float handZ = VRIK.VrikGetHandZ(true)
 	Float playerAngle = PlayerRef.GetAngleZ()
 
 	Roulette.TranslateTo(PlayerRef.X + UI_DISTANCE * Math.sin(playerAngle), PlayerRef.Y + UI_DISTANCE * Math.cos(playerAngle), VRIK.VrikGetHmdZ(), 0, 0, playerAngle, 1000)
@@ -56,7 +60,7 @@ Event OnUpdate()
 		Else
 			top = UI_ZEES
 		EndIf
-		DisplayItems[index].MoveTo(PlayerRef, UI_DISTANCE * Math.sin(playerAngle - left), UI_DISTANCE * Math.cos(playerAngle - left), (VRIK.VrikGetHmdZ() - PlayerRef.Z) + top)
+		DisplayItems[index].MoveTo(PlayerRef, UI_DISTANCE * Math.sin(playerAngle - left), UI_DISTANCE * Math.cos(playerAngle - left), (VRIK.VrikGetHmdZ() - PlayerRef.Z) - top)
 		index += 1
 	EndWhile
 

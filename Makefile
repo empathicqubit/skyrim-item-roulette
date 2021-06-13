@@ -63,65 +63,8 @@ plugin/Data/Textures/_EQ_ItemRoulette/%.dds: Source/Textures/_EQ_ItemRoulette/%.
 
 models: $(modelFiles) textures
 
-.PRECIOUS: build/ChunkMerge/ChunkMerge.exe
-build/ChunkMerge/ChunkMerge.exe: build/chunkmerge.7z
-		7z x -y "-obuild" "$<"
-		touch -c "$@"
-
-.PRECIOUS: build/chunkmerge.7z
-build/chunkmerge.7z:
-		powershell -Command 'Invoke-WebRequest -Uri "https://github.com/downloads/skyfox69/NifUtils/ChunkMerge0155.7z" -OutFile "$@"'
-
-build/ChunkMerge/ChunkMerge.xml: build/ChunkMerge/ChunkMerge.exe
-		cat > "$@" <<'HERE'
-		<Config>
-			<PathSkyrim>$(SKYRIM_BASE)</PathSkyrim>
-			<PathNifXML>$(current_dir)/nif.xml</PathNifXML>
-			<PathTemplate>$(current_dir)\\Source\\Meshes\\_EQ_ItemRoulette</PathTemplate>
-			<LastTexture></LastTexture>
-			<LastTemplate></LastTemplate>
-			<DirSource></DirSource>
-			<DirDestination></DirDestination>
-			<DirCollision></DirCollision>
-			<MatHandling>0</MatHandling>
-			<VertexColorHandling>0</VertexColorHandling>
-			<UpdateTangentSpace>1</UpdateTangentSpace>
-			<ReorderProperties>1</ReorderProperties>
-			<CollTypeHandling>1</CollTypeHandling>
-			<CollMaterial>-553455049</CollMaterial>
-			<MaterialScan>
-				<MatScanTag>SkyrimHavokMaterial</MatScanTag>
-				<MatScanName>SKY_HAV_</MatScanName>
-				<MatScanPrefixList>
-					<MatScanPrefix>Material</MatScanPrefix>
-				</MatScanPrefixList>
-				<MatScanIgnoreList>
-					<MatScanIgnore>Unknown</MatScanIgnore>
-				</MatScanIgnoreList>
-			</MaterialScan>
-			<DirectXView>
-				<ShowTexture>1</ShowTexture>
-				<ShowWireframe>0</ShowWireframe>
-				<ShowColorWire>0</ShowColorWire>
-				<ForceDDS>0</ForceDDS>
-				<ColorWireframe>ffffffff</ColorWireframe>
-				<ColorWireCollision>ffffff00</ColorWireCollision>
-				<ColorBackground>ff200020</ColorBackground>
-				<ColorSelected>ffff00ff</ColorSelected>
-				<TexturePathList>
-				</TexturePathList>
-			</DirectXView>
-		</Config>
-	HERE
-
-plugin/Data/Meshes/_EQ_ItemRoulette/%_final.nif: setalpha.py .venv/pyvenv.cfg plugin/Data/Meshes/_EQ_ItemRoulette/%_chunkmerge.nif
-		pyenv exec python -m pipenv run python "$<" -- "$(word 3,$^)" "$@"
-
-.PRECIOUS: plugin/Data/Meshes/_EQ_ItemRoulette/%_chunkmerge.nif
-plugin/Data/Meshes/_EQ_ItemRoulette/%_chunkmerge.nif: Source/Meshes/_EQ_ItemRoulette/%_template.nif plugin/Data/Meshes/_EQ_ItemRoulette/%_collision.nif plugin/Data/Meshes/_EQ_ItemRoulette/%_mesh.nif build/ChunkMerge/ChunkMerge.xml
-		cp "$(filter %_mesh.nif,$^)" "$@"
-		build/ChunkMerge/ChunkMerge.exe &
-		powershell -Command '$$env:ChunkMerge_NifFile=Split-Path (Join-Path "$@" "."); $$env:ChunkMerge_CollisionFile=Split-Path (Join-Path "$(filter %_collision.nif,$^)" ".") ; $$env:ChunkMerge_TemplateFile="$(notdir $(filter %_template.nif,$^))" ; Start-Process -Wait -FilePath AutoHotKey -ArgumentList @("ChunkMerge.ahk") ; Stop-Process -Name ChunkMerge'
+plugin/Data/Meshes/_EQ_ItemRoulette/%_final.nif: setalpha.py .venv/pyvenv.cfg plugin/Data/Meshes/_EQ_ItemRoulette/%_mesh.nif Source/Meshes/_EQ_ItemRoulette/%_template.nif
+		pyenv exec python -m pipenv run python "$<" -- "$(word 3,$^)" "$@" "$(word 4,$^)"
 
 .PRECIOUS: build/blender-windows64/blender.exe
 build/blender-windows64/blender.exe: build/blender.zip build/blender-windows64/2.93/scripts/addons/io_scene_niftools/__init__.py
@@ -143,10 +86,5 @@ build/blender.zip:
 
 .PRECIOUS: plugin/Data/Meshes/_EQ_ItemRoulette/%_mesh.nif
 plugin/Data/Meshes/_EQ_ItemRoulette/%_mesh.nif: Source/Meshes/_EQ_ItemRoulette/%_mesh.blend build/blender-windows64/blender.exe
-		BLENDER="$(word 2, $^)"
-		"$$BLENDER" --background --python "./export_blender_models.py" -- "$<" "$@"
-
-.PRECIOUS: plugin/Data/Meshes/_EQ_ItemRoulette/%_collision.nif
-plugin/Data/Meshes/_EQ_ItemRoulette/%_collision.nif: Source/Meshes/_EQ_ItemRoulette/%_collision.blend build/blender-windows64/blender.exe
 		BLENDER="$(word 2, $^)"
 		"$$BLENDER" --background --python "./export_blender_models.py" -- "$<" "$@"
