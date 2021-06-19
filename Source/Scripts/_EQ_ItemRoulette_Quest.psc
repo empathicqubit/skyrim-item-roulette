@@ -9,6 +9,7 @@ Form[] SpawnedForms
 Form[] UnspawnedForms
 ObjectReference Roulette
 
+Bool ShouldSortInventoryItems
 Int MAX_ITEMS
 Float UI_TRANSLATE_SPEED
 Float UI_DISTANCE
@@ -50,9 +51,13 @@ Function Main()
 		index += 1
 	EndWhile
 
+	ShouldSortInventoryItems = True
+
 	Debug.Trace("Item Roulette loaded")
+
 	Roulette = PlayerRef.PlaceAtMe(_EQ_ItemRoulette_Roulette)
 	Roulette.SetMotionType(Roulette.Motion_Keyframed)
+
 	RegisterForModEvent("_EQ_ItemRoulette_Activate", "OnMyAction")
 	VRIK.VrikAddGestureAction("_EQ_ItemRoulette_Activate", "Activate Item Roulette")
 	RegisterForSingleUpdate(0.01)
@@ -60,6 +65,11 @@ EndFunction
 
 Event OnUpdate()
 	Float playerAngle = PlayerRef.GetAngleZ()
+
+	if ShouldSortInventoryItems
+		ShouldSortInventoryItems = False
+		SortInventoryItems()
+	EndIf
 
 	Int index = 0
 	While index < MAX_ITEMS
@@ -104,22 +114,13 @@ Event OnUpdate()
 	RegisterForSingleUpdate(0.01)
 EndEvent
 
-Event OnMyAction(string eventName, string strArg, float numArg, Form sender)
-	Debug.Trace("VRIK activated me!")
-	;/
-	Get list of all inventory item names, sorted alphabetically
-	break into groups of five
-	find a common label for that group
-	group the groups in a similar manner until there are only five?
-	/;
-	Int numItems = PlayerRef.getNumItems()
-	Debug.Trace("Found " + numItems + " items")
-
+Function SortInventoryItems()
 	_EQ_ItemRoulette_FormChunks sortChunks = ((Roulette.PlaceAtMe(FormChunks) as Form) as _EQ_ItemRoulette_FormChunks)
 	sortChunks.Children = new Form[127]
 	Int formIndex = 0
 	Int chunkIndex = -1
 	Int chunkItemIndex = 127
+	Int numItems = PlayerRef.getNumItems()
 	_EQ_ItemRoulette_FormChunks chunk
 	While formIndex < numItems
 		If chunkItemIndex >= 127
@@ -134,13 +135,39 @@ Event OnMyAction(string eventName, string strArg, float numArg, Form sender)
 		chunkItemIndex += 1
 	EndWhile
 
+	Debug.StartStackProfiling()
 	Debug.Trace("Sorting")
 	sortChunks.SortByNameRecursive()
 	Debug.Trace("Printing")
 	sortChunks.PrintNamesRecursive()
+	Debug.Trace("Grouping")
+	_EQ_ItemRoulette_FormChunks groupChunks = sortChunks.GroupByName(Roulette)
+	Debug.Trace("Printing")
+	Debug.StopStackProfiling()
+	groupChunks.PrintNamesRecursive()
+EndFunction
+
+Function PlayerItemAdded(Form baseItem, Int itemCount, ObjectReference itemRef, ObjectReference destContainer)
+	ShouldSortInventoryItems = True
+EndFunction
+
+Function PlayerItemRemoved(Form baseItem, Int itemCount, ObjectReference itemRef, ObjectReference destContainer)
+	ShouldSortInventoryItems = True
+EndFunction
+
+Event OnMyAction(string eventName, string strArg, float numArg, Form sender)
+	Debug.Trace("VRIK activated me!")
+	;/
+	Get list of all inventory item names, sorted alphabetically
+	break into groups of five
+	find a common label for that group
+	group the groups in a similar manner until there are only five?
+	/;
+	Int numItems = PlayerRef.GetNumItems()
+	Debug.Trace("Found " + numItems + " items")
 
 	Int count = 0
-	formIndex = numItems
+	Int formIndex = numItems
 	While formIndex > 0 && formIndex > numItems - MAX_ITEMS
 		formIndex -= 1
 		count = numItems - formIndex
