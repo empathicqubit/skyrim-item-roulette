@@ -18,10 +18,8 @@ String[] Function GetChildNames()
 		ChildNamesInitialized = True
 		
 		While(i < Children.Length)
-			Debug.Trace(i)
 			If Children[i] != None
 				names[i] = GetSortName(Children[i].GetName())
-				Debug.Trace(names[i])
 			Else
 				names[i] = ""
 			EndIf
@@ -124,16 +122,26 @@ Function SortByNameRecursive()
 	EndWhile
 EndFunction
 
-Function PrintNamesRecursive()
+Function IndentTrace(String line, Int indentLevel = 0)
+	Int i = 0
+	String indent = ""
+	While i < indentLevel
+		indent += "    "
+		i += 1
+	EndWhile
+	Debug.Trace(indent + line)
+EndFunction
+
+Function PrintNamesRecursive(Int level = 0)
 	Int childIndex = 0
 	While childIndex < Children.Length
 		Form child = Children[childIndex]
 		_EQ_ItemRoulette_FormChunks subChunk = (child as _EQ_ItemRoulette_FormChunks)
 		If(subChunk != None)
-			Debug.Trace("Chunk " + subChunk.ChunkName)
-			subChunk.PrintNamesRecursive()
+			IndentTrace("Chunk " + subChunk.ChunkName, level)
+			subChunk.PrintNamesRecursive(level + 1)
 		ElseIf child != None
-            Debug.Trace(child.GetName())
+			IndentTrace(child.GetName(), level)
 		EndIf
 		childIndex += 1
 	EndWhile
@@ -162,15 +170,25 @@ String Function Disambiguate(String source, String prev, String next)
 		i += 1
 	EndWhile
 
-	return StringUtil.Substring(source, 0, i)
+	return StringUtil.Substring(source, 0, sourceLength)
 EndFunction
 
-Function FinishLastChunk(_EQ_ItemRoulette_FormChunks prevChunk, _EQ_ItemRoulette_FormChunks newChunk)
+Function NameNewChunk(_EQ_ItemRoulette_FormChunks prevChunk, _EQ_ItemRoulette_FormChunks newChunk)
 	String prevChunkEndName = ""
 	if prevChunk != None
 		prevChunkEndName = prevChunk.EndName
 	EndIf
 	newChunk.ChunkName = Disambiguate(newChunk.StartName, prevChunkEndName, newChunk.EndName)
+EndFunction
+
+Function NamePreviousChunk(_EQ_ItemRoulette_FormChunks prevChunk, _EQ_ItemRoulette_FormChunks newChunk)
+	String newChunkStartName = ""
+	If prevChunk != None
+		If newChunk != None
+			newChunkStartName = newChunk.StartName
+		EndIf
+		prevChunk.ChunkName += "-" + Disambiguate(prevChunk.EndName, prevChunk.StartName, newChunkStartName)
+	EndIf
 EndFunction
 
 Int Function FindMinIndex(Int[] indices, String[] names)
@@ -203,8 +221,8 @@ Int Function FindMinIndex(Int[] indices, String[] names)
 EndFunction
 
 _EQ_ItemRoulette_FormChunks Function GroupByName(ObjectReference placer)
-	_EQ_ItemRoulette_FormChunks groupChunks = ((placer.PlaceAtMe(FormChunks) as Form) as _EQ_ItemRoulette_FormChunks)
-	groupChunks.Children = new Form[127]
+	Int MAX_ITEMS = 5
+	Form[] groupChunks = new Form[127]
 
 	Int[] indices = new Int[127]
 	Int i = 0
@@ -225,7 +243,7 @@ _EQ_ItemRoulette_FormChunks Function GroupByName(ObjectReference placer)
 		i += 1
 	EndWhile
 
-	Int chunkItemIndex = 5
+	Int chunkItemIndex = MAX_ITEMS
 	Int chunkIndex = -1
 	Bool finishedScanningIndices = False
 	Int index
@@ -238,26 +256,24 @@ _EQ_ItemRoulette_FormChunks Function GroupByName(ObjectReference placer)
 		minIndex = FindMinIndex(indices, names)
 		If minIndex > -1
 			finishedScanningIndices = False
-			If chunkItemIndex >= 5
+			If chunkItemIndex >= MAX_ITEMS
 				chunkItemIndex = 0
 				chunkIndex += 1
 				prevChunk = newChunk
 				newChunk = ((placer.PlaceAtMe(FormChunks) as Form) as _EQ_ItemRoulette_FormChunks)
 				newChunk.Children = new Form[5]
-				groupChunks.Children[chunkIndex] = newChunk
+				groupChunks[chunkIndex] = newChunk
 			EndIf
 
 			index = indices[minIndex]
 			currentItem = (Children[minIndex] as _EQ_ItemRoulette_FormChunks).Children[index]
 			newChunk.Children[chunkItemIndex] = currentItem
-			if chunkItemIndex == 0
+			If chunkItemIndex == 0
 				newChunk.StartName = names[minIndex]
-				if prevChunk != None
-					prevChunk.ChunkName += "-" + Disambiguate(prevChunk.EndName, prevChunk.StartName, newChunk.StartName)
-				EndIf
+				NamePreviousChunk(prevChunk, newChunk)
 			ElseIf chunkItemIndex == newChunk.Children.Length - 1
 				newChunk.EndName = names[minIndex]
-				FinishLastChunk(prevChunk, newChunk)
+				NameNewChunk(prevChunk, newChunk)
 			EndIf
 			indices[minIndex] = index + 1
 
@@ -271,7 +287,50 @@ _EQ_ItemRoulette_FormChunks Function GroupByName(ObjectReference placer)
 			chunkItemIndex += 1
 		EndIf
 	EndWhile
-	FinishLastChunk(prevChunk, newChunk)
+	NameNewChunk(prevChunk, newChunk)
 
-	Return groupChunks
+	Form[] currentChunks = groupChunks
+	Int currentChunkIndex
+	Int currentChunksLength = chunkIndex
+	If chunkItemIndex == 0
+		currentChunksLength = chunkIndex - 1
+	EndIf
+	Form[] newChunks
+	newChunk = None
+	prevChunk = None
+
+	While currentChunksLength > MAX_ITEMS
+		chunkIndex = 0
+		chunkItemIndex = 0
+		currentChunkIndex = 0
+		newChunks = new Form[127]
+		While currentChunkIndex < currentChunksLength
+			prevChunk = newChunk
+			newChunk = ((placer.PlaceAtMe(FormChunks) as Form) as _EQ_ItemRoulette_FormChunks)
+			newChunk.Children = new Form[5]
+			chunkItemIndex = 0
+			While currentChunkIndex < currentChunksLength && chunkItemIndex < newChunk.Children.Length
+				oldChunk = currentChunks[currentChunkIndex] as _EQ_ItemRoulette_FormChunks
+				newChunk.Children[chunkItemIndex] = currentChunks[currentChunkIndex]
+				If chunkItemIndex == 0
+					newChunk.StartName = oldChunk.StartName
+					NamePreviousChunk(prevChunk, newChunk)
+				EndIf
+				chunkItemIndex += 1
+				currentChunkIndex += 1
+			EndWhile
+			newChunks[chunkIndex] = newChunk
+			newChunk.EndName = oldChunk.EndName
+			NameNewChunk(prevChunk, newChunk)
+			chunkIndex += 1
+		EndWhile
+		currentChunks = newChunks
+		currentChunksLength = chunkIndex
+	EndWhile
+	NamePreviousChunk(newChunk, None)
+
+	_EQ_ItemRoulette_FormChunks finalChunks = ((placer.PlaceAtMe(FormChunks) as Form) as _EQ_ItemRoulette_FormChunks)
+	finalChunks.Children = currentChunks
+
+	Return finalChunks
 EndFunction
