@@ -4,9 +4,17 @@ Actor Property PlayerRef Auto
 Static Property _EQ_ItemRoulette_Roulette Auto
 Activator Property FormChunks Auto
 
+MiscObject Property Slot01 Auto
+MiscObject Property Slot02 Auto
+MiscObject Property Slot03 Auto
+MiscObject Property Slot04 Auto
+MiscObject Property Slot05 Auto
+
 ObjectReference[] DisplayItems
-Form[] SpawnedForms
-Form[] UnspawnedForms
+Form[] Slots
+_EQ_ItemRoulette_FormChunks SpawnedNode
+_EQ_ItemRoulette_FormChunks SelectedNode
+_EQ_ItemRoulette_FormChunks ItemTree
 ObjectReference Roulette
 
 Bool ShouldSortInventoryItems
@@ -30,26 +38,23 @@ Function Main()
 	UI_ITEM_SCALE = 0.25
 	UI_TRANSLATE_SPEED = 10000
 
-	DisplayItems = New ObjectReference[127]
+	Slots = New Form[5]
+	Slots[0] = Slot01
+	Slots[1] = Slot02
+	Slots[2] = Slot03
+	Slots[3] = Slot04
+	Slots[4] = Slot05
+
+	DisplayItems = New ObjectReference[5]
 	int index = 0
 	While index < MAX_ITEMS
 		DisplayItems[index] = None
 		index += 1
 	EndWhile
 
-	UnspawnedForms = New Form[127]
-	index = 0
-	While index < MAX_ITEMS
-		UnspawnedForms[index] = None
-		index += 1
-	EndWhile
-
-	SpawnedForms = New Form[127]
-	index = 0
-	While index < MAX_ITEMS
-		SpawnedForms[index] = None
-		index += 1
-	EndWhile
+	ItemTree = None
+	SelectedNode = None
+	SpawnedNode = None
 
 	ShouldSortInventoryItems = True
 
@@ -72,21 +77,43 @@ Event OnUpdate()
 	EndIf
 
 	Int index = 0
-	While index < MAX_ITEMS
-		Form unspawnedForm = UnspawnedForms[index]
-		if unspawnedForm != None
-			If unspawnedForm != SpawnedForms[index]
-				SpawnedForms[index] = unspawnedForm
-				ObjectReference displayItem = Roulette.PlaceAtMe(unspawnedForm)
-				DisplayItems[index] = displayItem
-				displayItem.SetScale(UI_ITEM_SCALE)
-				displayItem.SetMotionType(displayItem.Motion_Keyframed)
-			EndIf
+	If SelectedNode != None && SpawnedNode != SelectedNode
+		ObjectReference[] newItems = new ObjectReference[5]
+		Form child
+		_EQ_ItemRoulette_FormChunks subChunk = (SelectedNode.Children[0] as _EQ_ItemRoulette_FormChunks)
+		If subChunk != None
+			While index < SelectedNode.Children.Length
+				subChunk = (SelectedNode.Children[index] as _EQ_ItemRoulette_FormChunks)
+				if subChunk != None
+					Slots[index].SetName(subChunk.ChunkName)
+					ObjectReference newItem = Roulette.PlaceAtMe(Slots[index])
+					newItem.SetScale(UI_ITEM_SCALE)
+					newItem.SetMotionType(newItem.Motion_Keyframed)
+					newItems[index] = newItem
+					index += 1
+				EndIf
+			EndWhile
 		Else
-			index += 1000
+			While index < SelectedNode.Children.Length
+				child = SelectedNode.Children[index]
+				If child != None
+					newItems[index] = Roulette.PlaceAtMe(child)
+					index += 1
+				EndIf
+			EndWhile
 		EndIf
-		index += 1
-	EndWhile
+
+		index = 0
+		While index < MAX_ITEMS
+			If DisplayItems[index] != None
+				DisplayItems[index].Delete()
+			EndIf
+		EndWhile
+
+		DisplayItems = newItems
+
+		SpawnedNode = SelectedNode
+	EndIf
 
 	Roulette.TranslateTo(PlayerRef.X + UI_DISTANCE * Math.sin(playerAngle), PlayerRef.Y + UI_DISTANCE * Math.cos(playerAngle), VRIK.VrikGetHmdZ(), 0, 0, playerAngle, UI_TRANSLATE_SPEED)
 
@@ -135,16 +162,11 @@ Function SortInventoryItems()
 		chunkItemIndex += 1
 	EndWhile
 
-	Debug.StartStackProfiling()
-	Debug.Trace("Sorting")
-	sortChunks.SortByNameRecursive()
-	Debug.Trace("Printing")
-	sortChunks.PrintNamesRecursive(0)
-	Debug.Trace("Grouping")
-	_EQ_ItemRoulette_FormChunks groupChunks = sortChunks.GroupByName(Roulette)
-	Debug.Trace("Printing")
-	Debug.StopStackProfiling()
-	groupChunks.PrintNamesRecursive(0)
+	Debug.Trace("Start generating list")
+	_EQ_ItemRoulette_FormChunks top = sortChunks.GroupByType(Roulette)
+
+	ItemTree = top
+	Debug.Trace("Finish generating list")
 EndFunction
 
 Function PlayerItemAdded(Form baseItem, Int itemCount, ObjectReference itemRef, ObjectReference destContainer)
@@ -157,21 +179,8 @@ EndFunction
 
 Event OnMyAction(string eventName, string strArg, float numArg, Form sender)
 	Debug.Trace("VRIK activated me!")
-	;/
-	Get list of all inventory item names, sorted alphabetically
-	break into groups of five
-	find a common label for that group
-	group the groups in a similar manner until there are only five?
-	/;
-	Int numItems = PlayerRef.GetNumItems()
-	Debug.Trace("Found " + numItems + " items")
 
-	Int count = 0
-	Int formIndex = numItems
-	While formIndex > 0 && formIndex > numItems - MAX_ITEMS
-		formIndex -= 1
-		count = numItems - formIndex
-		Form invItem = PlayerRef.GetNthForm(formIndex)
-		UnspawnedForms[count - 1] = invItem
-	EndWhile
+	If SelectedNode == None
+		SelectedNode = ItemTree
+	EndIf
 EndEvent
